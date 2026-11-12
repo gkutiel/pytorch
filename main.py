@@ -1,12 +1,15 @@
 
-
+import torch
 from torch import nn
+from torch.nn.functional import cross_entropy
+from torch.optim import SGD
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
+from tqdm import tqdm
 
-LR = 0.1
-EPOCHS = 50
+LR = 0.01
+EPOCHS = 2
 
 train = MNIST(
     root='./data',
@@ -34,6 +37,7 @@ test_dl = DataLoader(
 
 
 if __name__ == "__main__":
+    torch.manual_seed(0)
 
     def blk(i: int, o: int):
         return [
@@ -53,8 +57,21 @@ if __name__ == "__main__":
         nn.Linear(64 * 7 * 7, 10)
     )
 
-    x, y = next(iter(train_dl))
+    opt = SGD(net.parameters(), lr=LR, momentum=0.9)
 
-    y_hat = net(x)
+    bar = tqdm(range(EPOCHS))
+    net.train()
+    for _ in bar:
+        for x, y in train_dl:
+            opt.zero_grad()
+            y_hat = net(x)
+            loss = cross_entropy(y_hat, y)
+            bar.set_postfix(loss=loss.item())
+            loss.backward()
+            opt.step()
 
-    print(y_hat.shape)
+        # with torch.no_grad():
+        #     for x, y in test_dl:
+        #         ...
+
+    torch.save(net.state_dict(), "mnist_cnn.pt")
