@@ -66,7 +66,8 @@ if __name__ == "__main__":
             opt.zero_grad()
             y_hat = net(x)
             loss = cross_entropy(y_hat, y)
-            bar.set_postfix(loss=loss.item())
+            acc = (y_hat.argmax(dim=1) == y).float().mean()
+            bar.set_postfix(loss=loss.item(), acc=acc.item())
             loss.backward()
             opt.step()
 
