@@ -1,6 +1,7 @@
 
 import torch
 from torch import nn, optim
+from torch.nn.functional import mse_loss
 
 
 class MyModule(nn.Module):
@@ -38,7 +39,7 @@ opt = optim.SGD(
 for _ in range(EPOCHS):
     opt.zero_grad()
     y_hat = model(x)
-    loss = ((y - y_hat) ** 2).mean()
+    loss = mse_loss(y, y_hat)
     print(f'MSE: {loss.item()}')
     loss.backward()
     opt.step()
