@@ -1,6 +1,9 @@
 
+
+from math import sqrt
+
 import torch
-from torch import nn
+from torch import Tensor, nn, softmax
 from torch.nn.functional import cross_entropy
 from torch.optim import SGD
 from torch.utils.data import DataLoader
@@ -36,6 +39,16 @@ test_dl = DataLoader(
     drop_last=True)
 
 
+def attend(q: Tensor, k: Tensor, v: Tensor):
+    # q: (B, T, D)
+    # k: (B, T, D)
+    # v: (B, T, E)
+
+    ws = k @ q / sqrt(len(q))
+    ws = softmax(ws, dim=0)
+    return ws @ v
+
+
 if __name__ == "__main__":
     torch.manual_seed(0)
 
@@ -57,12 +70,12 @@ if __name__ == "__main__":
         nn.Linear(64 * 7 * 7, 10)
     )
 
-    opt = SGD(net.parameters(), lr=LR, momentum=0.9)
+    opt = SGD(net.parameters(), lr=LR, momentum=0.5)
 
-    bar = tqdm(range(EPOCHS))
     net.train()
-    for _ in bar:
-        for x, y in train_dl:
+    for e in range(EPOCHS):
+        bar = tqdm(train_dl, desc=f"Epoch {e+1}/{EPOCHS}")
+        for x, y in bar:
             opt.zero_grad()
             y_hat = net(x)
             loss = cross_entropy(y_hat, y)
